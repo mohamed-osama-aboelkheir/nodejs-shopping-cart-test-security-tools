@@ -16,7 +16,7 @@ jobs:
          fetch-depth: 0
      - name: Run Semgrep
        run: |
-         semgrep --config p/r2c --baseline-commit HEAD~ --json | jq -r '.results[] | "\(.path):\(.start.line) >>>\n \(.extra.message)"'
+         semgrep --config p/r2c --baseline-commit HEAD~ --json | jq -r '.results[] | "\(.path):\(.start.line) >>>\n \(.extra.message)"' > issues.txt
      - name: Get issues
        id: issues
        run: echo ::set-output name=issues::$(cat issues.txt)
