@@ -17,15 +17,17 @@ jobs:
      - name: Run Semgrep
        run: |
          env
-         semgrep --config p/r2c --baseline-commit HEAD~ --json | jq -r '.results[] | "# Semgrep finding\\n##Affected Path\\n \(.path):\(.start.line) \\n```js\\n\(.extra.lines)\\n```  \\n\\n##Issue Description\\n\\n \(.extra.message)"' > issues.txt
-     - name: Get issues
-       id: issues
-       run: |
-         content=$(cat issues.txt | sed "s/$/%0A/g")
-         echo ::set-output name=issues::$content 
-     - name: Comment on PR
-       uses: thollander/actions-comment-pull-request@v1
-       with:
-         message: "Semgrep found some issues:\n${{ steps.issues.outputs.issues }}"
-         repo-token: ${{ secrets.GITHUB_TOKEN }}
+         semgrep --config p/r2c --baseline-commit HEAD~ --json > findings.json
+      - name: Set up Python environment
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Post comments for each finding
+        run: python post_comments.py
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
      

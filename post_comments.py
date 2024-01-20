@@ -1,41 +1,48 @@
-import os
 import json
+import os
 import requests
-from urllib.parse import urlparse
+from urllib.parse import quote
 
-# Get the environment variables
-github_token = os.getenv('GITHUB_TOKEN')
-circle_pull_request = os.getenv('CIRCLE_PULL_REQUEST')
-
-# Parse the pull request URL to extract the PR number
-pr_number = urlparse(circle_pull_request).path.split('/')[-1]
-
-# Repository information
-owner, repo = os.getenv('CIRCLE_PROJECT_USERNAME'), os.getenv('CIRCLE_PROJECT_REPONAME')
-
-# Semgrep output file (assumed to be in JSON format)
-semgrep_output_file = 'semgrep_output.json'
-
-# GitHub API URL for posting comments
-comments_url = f'https://api.github.com/repos/{owner}/{repo}/issues/{pr_number}/comments'
-
-# Read the Semgrep findings from the output file
-with open(semgrep_output_file) as f:
+# Load the findings from the JSON file
+with open('findings.json', 'r') as f:
     findings = json.load(f)
 
-# Post a comment for each finding
+# Parse the repository and pull request number from the GITHUB_REF environment variable
+pr_number = os.environ['GITHUB_REF'].split('/')[2]
+owner = os.environ['GITHUB_REPOSITORY_OWNER']
+repo = os.environ['GITHUB_REPOSITORY'].split('/')[1]
+
+# Set up the headers for the GitHub API request
 headers = {
-    'Authorization': f'token {github_token}',
-    'Accept': 'application/vnd.github.v3+json'
+    'Authorization': f'token {os.environ["GITHUB_TOKEN"]}',
+    'Accept': 'application/vnd.github.v3+json',
 }
 
+# Iterate over the findings and post a comment for each one
 for finding in findings['results']:
-    message = finding['extra']['message']
-    path = finding['path']
-    start_line = finding['start']['line']
-    comment_body = f'Semgrep finding: {message} at {path}:{start_line}'
-    data = {'body': comment_body}
-    response = requests.post(comments_url, headers=headers, json=data)
-    if response.status_code != 201:
-        print(f'Error posting comment: {response.content}')
+    body = f'''
+## <img src="https://semgrep.dev/docs/img/semgrep.svg" width="30" height="30"> Semgrep finding
+* **Rule ID:** {finding['check_id']}
+* **File:** {finding['path']}
+* **Line:** {finding['start']['line']}
+* **Description:** {finding['extra']['message']}
+* **Impact:** {finding['extra']['metadata']['impact']}
+* **Confidence:** {finding['extra']['metadata']['confidence']}
+* **Semgrep Rule:** [Link](https://semgrep.dev/r/{quote(finding['check_id'])})
+    '''
 
+    payload = {
+        'body': body,
+        'commit_id': os.environ['GITHUB_SHA'],
+        'path': finding['path'],
+        'line': finding['start']['line'],
+    }
+
+    response = requests.post(
+        f'https://api.github.com/repos/{owner}/{repo}/pulls/{pr_number}/comments',
+        headers=headers,
+        json=payload,
+    )
+
+    if response.status_code != 201:
+        raise Exception(f'Failed to post comment: {response.content}')
