@@ -16,6 +16,7 @@ jobs:
          fetch-depth: 0
      - name: Run Semgrep
        run: |
+         env
          semgrep --config p/r2c --baseline-commit HEAD~ --json | jq -r '.results[] | "# Semgrep finding\\n##Affected Path\\n \(.path):\(.start.line) \\n```js\\n\(.extra.lines)\\n```  \\n\\n##Issue Description\\n\\n \(.extra.message)"' > issues.txt
      - name: Get issues
        id: issues
