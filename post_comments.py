@@ -18,6 +18,24 @@ headers = {
     'Accept': 'application/vnd.github.v3+json',
 }
 
+# Set up the headers for the GitHub API request
+headers = {
+    'Authorization': f'token {os.environ["GITHUB_TOKEN"]}',
+    'Accept': 'application/vnd.github.v3+json',
+}
+
+# Make the API request
+response = requests.get(
+    f'https://api.github.com/repos/{owner}/{repo}/pulls/{pr_number}/commits',
+    headers=headers,
+)
+
+# Parse the response JSON
+commits = response.json()
+
+# The latest commit is the first item in the list
+latest_commit = commits[0]['sha']
+
 # Iterate over the findings and post a comment for each one
 for finding in findings['results']:
     body = f'''
@@ -33,7 +51,7 @@ for finding in findings['results']:
 
     payload = {
         'body': body,
-        'commit_id': os.environ['GITHUB_SHA'],
+        'commit_id': latest_commit,
         'path': finding['path'],
         'line': finding['start']['line'],
     }
