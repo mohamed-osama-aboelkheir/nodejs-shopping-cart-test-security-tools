@@ -18,16 +18,15 @@ jobs:
        run: |
          env
          semgrep --config p/r2c --baseline-commit HEAD~ --json > findings.json
-      - name: Set up Python environment
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.x'
-
-      - name: Install dependencies
-        run: pip install requests
-
-      - name: Post comments for each finding
-        run: python post_comments.py
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+     - name: Set up Python environment
+       uses: actions/setup-python@v2
+       with:
+         python-version: '3.x'
      
+     - name: Install dependencies
+       run: pip install requests
+          
+     - name: Post comments for each finding
+       run: python post_comments.py
+       env:
+         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
