@@ -30,3 +30,4 @@ jobs:
        run: python post_comments.py
        env:
          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+         LATEST_COMMIT: ${{ github.event.pull_request.head.sha }}
