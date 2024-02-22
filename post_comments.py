@@ -34,7 +34,8 @@ response = requests.get(
 commits = response.json()
 
 # The latest commit is the first item in the list
-latest_commit = commits[0]['sha']
+# latest_commit = commits[0]['sha']
+latest_commit = os.environ["LATEST_COMMIT"]
 
 # Iterate over the findings and post a comment for each one
 for finding in findings['results']:
