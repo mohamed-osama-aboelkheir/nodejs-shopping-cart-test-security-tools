@@ -24,13 +24,17 @@ def get_pr_semgrep_comments(owner,repo,pr_number,token):
         # Extract the comments from the response
         comments = response.json()
 
-        pattern = r'^<!--\s*semgrep_finding_fingerprint:\s*(.+)\s+-->$'
+        fingerprint_pattern = r'^<!--\s*semgrep_finding_fingerprint:\s*(.+)\s+-->$'
+        status_pattern = r'^<!--\s*semgrep_finding_status:\s*(.+)\s+-->$'
         for comment in comments:
             first_line = comment['body'].splitlines()[0]
-            match = re.search(pattern, first_line)
-            if match:
-                fingerprints[match.group(1)] = comment
-
+            fingerprint_match = re.search(fingerprint_pattern, first_line)
+            if fingerprint_match: 
+                second_line = comment['body'].splitlines()[1]
+                status_match = re.search(status_pattern, second_line)
+                comment["status"] = status_match.group(1) if status_match else "open"
+                fingerprints[fingerprint_match.group(1)] = comment
+    
     return fingerprints
 
 def create_semgrep_comments(owner,repo,pr_number,token,latest_commit,finding):
@@ -42,6 +46,7 @@ def create_semgrep_comments(owner,repo,pr_number,token,latest_commit,finding):
     }
 
     body = f'''<!-- semgrep_finding_fingerprint: {finding['extra']['fingerprint']} -->
+<!-- semgrep_finding_status: open -->
 ## <img src="https://semgrep.dev/docs/img/semgrep.svg" width="30" height="30"> Semgrep finding
 * **Rule ID:** {finding['check_id']}
 * **File:** {finding['path']}
@@ -69,7 +74,7 @@ def create_semgrep_comments(owner,repo,pr_number,token,latest_commit,finding):
         raise Exception(f'Failed to post comment: {response.content}')
 
 
-def reply_to_pr_comment(owner,repo,pr_number,token,comment_id,latest_commit):
+def reply_to_pr_comment(owner,repo,pr_number,token,comment_id,latest_commit,action="resolve"):
 
     resolve_comment_url = f"https://api.github.com/repos/{owner}/{repo}/pulls/{pr_number}/comments/{comment_id}/replies"
 
@@ -79,8 +84,13 @@ def reply_to_pr_comment(owner,repo,pr_number,token,comment_id,latest_commit):
         'X-GitHub-Api-Version': '2022-11-28'
     }
 
+    if action == "resolve":
+        reply_message = f"Resolved by the commit [{latest_commit}](https://github.com/{owner}/{repo}/pull/{pr_number}/commits/{latest_commit})"
+    else:
+        reply_message = f"Re-opened by the commit [{latest_commit}](https://github.com/{owner}/{repo}/pull/{pr_number}/commits/{latest_commit})" 
+
     payload = {
-        "body": f"Resolved by the commit [{latest_commit}](https://github.com/{owner}/{repo}/pull/{pr_number}/commits/{latest_commit})",
+        "body": reply_message,
     }
 
     response = requests.post(
@@ -90,9 +100,44 @@ def reply_to_pr_comment(owner,repo,pr_number,token,comment_id,latest_commit):
     )
 
     if response.status_code == 201:
-        print("Comment posted successfully to resolve the thread.")
+        print(f"Comment reply posted successfully to {action} the finding.")
     else:
-        print(f"Failed to post comment. Status code: {response.status_code}, Response: {response.json()}")
+        print(f"Failed to post comment reply. Status code: {response.status_code}, Response: {response.json()}")
 
 
+def update_status_in_comment(owner,repo,comment_id,token,body,new_status):
 
+    update_comment_url = f"https://api.github.com/repos/{owner}/{repo}/pulls/comments/{comment_id}"
+
+    headers = {
+        'Authorization': f'Bearer {token}',
+        'Accept': 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28'
+    }
+
+    # Check if 2nd line has the status, if it does update it, if not insert new line
+    body_lines = body.splitlines()
+    second_line = body_lines[1]
+    status_pattern = r'^<!--\s*semgrep_finding_status:\s*(.+)\s+-->$'
+    status_match = re.search(status_pattern, second_line)
+    if status_match:
+        body_lines[1] = f'<!-- semgrep_finding_status: {new_status} -->'
+    else:
+        body_lines.insert(1,f'<!-- semgrep_finding_status: {new_status} -->')
+
+    modified_body = "\n".join(body_lines)
+
+    payload = {
+        "body": modified_body
+    }
+
+    response = requests.patch(
+        update_comment_url,
+        json=payload,
+        headers=headers
+    )
+
+    if response.status_code == 200:
+        print("Comment status updated successfully")
+    else:
+        print(f"Failed to update comment. Status code: {response.status_code}, Response: {response.json()}")
