@@ -24,7 +24,7 @@ jobs:
          python-version: '3.x'
      
      - name: Install dependencies
-       run: pip install requests
+       run: pip install requests slack-sdk
           
      - name: Post comments for each finding
        run: python post_comments.py
