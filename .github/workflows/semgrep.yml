@@ -15,9 +15,7 @@ jobs:
        with:
          fetch-depth: 0
      - name: Run Semgrep
-       run: |
-         env
-         semgrep --config p/r2c --baseline-commit HEAD~ --json > findings.json
+       run: semgrep --config p/r2c --baseline-commit HEAD~ --json > findings.json
      - name: Set up Python environment
        uses: actions/setup-python@v2
        with:
@@ -27,7 +25,7 @@ jobs:
        run: pip install requests slack-sdk
           
      - name: Post comments for each finding
-       run: python post_comments.py
+       run: python semgrep_scripts/post_comments.py
        env:
          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
          LATEST_COMMIT: ${{ github.event.pull_request.head.sha }}
