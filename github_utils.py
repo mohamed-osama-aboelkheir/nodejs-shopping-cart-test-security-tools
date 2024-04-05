@@ -49,11 +49,8 @@ def create_semgrep_comments(owner,repo,pr_number,token,latest_commit,finding):
 <!-- semgrep_finding_status: open -->
 ## <img src="https://semgrep.dev/docs/img/semgrep.svg" width="30" height="30"> Semgrep finding
 * **Rule ID:** {finding['check_id']}
-* **File:** {finding['path']}
-* **Line:** {finding['start']['line']}
+* **Severity:** {finding['extra']['severity']}
 * **Description:** {finding['extra']['message']}
-* **Impact:** {finding['extra']['metadata']['impact']}
-* **Confidence:** {finding['extra']['metadata']['confidence']}
 * **Semgrep Rule:** [Link](https://semgrep.dev/r/{quote(finding['check_id'])})
 '''
     
