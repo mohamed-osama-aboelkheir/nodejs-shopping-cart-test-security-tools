@@ -59,7 +59,8 @@ app.get('/vulnerable', (req, res) => {
  if (req.query.url) {
  	res.redirect(req.query.url);
  } else {
- 	res.redirect('https://www.example.com');
+	 //res.redirect('https://www.example.com');
+	 console.log(req.query.url);
  }
 });
 
