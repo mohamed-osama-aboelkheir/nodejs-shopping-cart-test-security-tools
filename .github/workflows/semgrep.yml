@@ -2,8 +2,7 @@ name: Semgrep CI
 on:
  pull_request:
    paths:
-     - '*.js'
-     - '*.jsx'
+     - '*'
 jobs:
  semgrep:
    runs-on: ubuntu-latest
