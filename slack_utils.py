@@ -29,7 +29,7 @@ Re-opened the below finding in PR <{pr_url}|#{pr_number}>
         '''
     elif notification_type == "resolved":
         message = f'''
-Resolved the below finding to PR <{pr_url}|#{pr_number}>
+Resolved the below finding in PR <{pr_url}|#{pr_number}>
 {finding_details}
         '''
     else:
