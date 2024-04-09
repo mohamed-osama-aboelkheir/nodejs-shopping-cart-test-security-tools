@@ -1,31 +1,31 @@
-name: Semgrep CI
+name: Semgrep Pull Request Scan
 on:
- pull_request:
-   paths:
-     - '*'
+  pull_request:
+    paths:
+      - '*'
 jobs:
- semgrep:
-   runs-on: ubuntu-latest
-   container:
-     image: returntocorp/semgrep:latest
-   steps:
-     - name: Checkout code
-       uses: actions/checkout@v2
-       with:
-         fetch-depth: 0
-     - name: Run Semgrep
-       run: semgrep --config p/r2c --baseline-commit HEAD~ --json > findings.json
-     - name: Set up Python environment
-       uses: actions/setup-python@v2
-       with:
-         python-version: '3.x'
-     
-     - name: Install dependencies
-       run: pip install requests slack-sdk
-          
-     - name: Post comments for each finding
-       run: python semgrep_scripts/post_comments.py
-       env:
-         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-         LATEST_COMMIT: ${{ github.event.pull_request.head.sha }}
-         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+  semgrep:
+    runs-on: ubuntu-latest
+    container:
+      image: returntocorp/semgrep:latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Run Semgrep
+        run: semgrep -c p/default -c p/security-audit -c p/cwe-top-25 -c p/owasp-top-ten -c p/javascript -c p/expressjs -c r/javascript.express --baseline-commit HEAD~ --json > findings.json
+      - name: Set up Python environment
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: pip install requests slack-sdk
+
+      - name: Post comments for each finding
+        run: python scripts/semgrep/post_comments.py
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          LATEST_COMMIT: ${{ github.event.pull_request.head.sha }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SEMGREP_SLACK_WEBHOOK_URL }}
