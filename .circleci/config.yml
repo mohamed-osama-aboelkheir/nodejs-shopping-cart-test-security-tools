@@ -3,27 +3,36 @@ version: 2.1
 jobs:
   semgrep:
     docker:
-      - image: returntocorp/semgrep-agent:v1
+      - image: returntocorp/semgrep:latest
     steps:
       - checkout
       - run:
-          name: Semgrep Scan
-          command: semgrep-agent --config p/r2c-ci --baseline-ref HEAD~ --json > semgrep_output.json || true
+          name: Run Semgrep
+          command: semgrep --config p/r2c --baseline-commit HEAD~ --json > findings.json
       - run:
-          name: Install Python dependencies
-          command: pip install requests
+          name: Set up Python environment
+          command: |
+            python3 -m venv venv
+            . venv/bin/activate
       - run:
-          name: Post Semgrep findings as comments
-          command: python post_comments.py
-          environment:
-            GITHUB_TOKEN: $CIRCLECI_GITHUB_TOKEN
-            CIRCLE_PULL_REQUEST: $CI_PULL_REQUEST
+          name: Install dependencies
+          command: |
+            pip install requests slack-sdk
+      - run:
+          name: Post comments for each finding
+          command: |
+            python semgrep_scripts/post_comments.py
+    environment:
+      GITHUB_TOKEN: << parameters.github_token >>
+      LATEST_COMMIT: << parameters.latest_commit >>
+      SLACK_WEBHOOK_URL: << parameters.slack_webhook_url >>
+
 workflows:
   version: 2
-  build:
+  pull_request:
     jobs:
       - semgrep:
-          filters:
-            branches:
-              only:
-                - master
+          parameters:
+            github_token: ${{ secrets.GITHUB_TOKEN }}
+            latest_commit: ${{ github.event.pull_request.head.sha }}
+            slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
