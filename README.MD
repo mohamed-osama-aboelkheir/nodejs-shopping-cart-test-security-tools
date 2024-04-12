@@ -1,3 +1,6 @@
+> [!CAUTION]
+> This is a test repo that intentionaly has vulnerable code, Please don't use
+
 # NodeJS Shopping Cart - NodeJS, Express, Express-Session, Express handlebars (hbs)
 
 ### Run locally on your machine
