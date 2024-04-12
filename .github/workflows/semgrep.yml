@@ -2,7 +2,7 @@ name: Semgrep Pull Request Scan
 on:
   pull_request:
     paths:
-      - '*'
+      - '**'
 jobs:
   semgrep:
     runs-on: ubuntu-latest
