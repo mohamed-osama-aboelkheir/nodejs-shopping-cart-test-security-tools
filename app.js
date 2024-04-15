@@ -65,4 +65,14 @@ app.get('/vulnerable', (req, res) => {
  }
 });
 
+app.get('/vulnerable2', (req, res) => {
+ if (req.query.url) {
+
+	console.log(req.query.url);
+ 	res.redirect(req.query.url);
+ } else {
+	 res.redirect('https://www.example.com');
+ }
+});
+
 module.exports = app;
