@@ -11,7 +11,7 @@ jobs:
           command: |
             coana run . \
             --api-key $COANA_API_KEY \
-            --repo-url https://github.com/ironclad/ironclad \
+            --repo-url https://github.com/mohamed-osama-aboelkheir/nodejs-shopping-cart-test-security-tools \
             --memory-limit 8192
 workflows:
   coana:
