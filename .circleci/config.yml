@@ -17,7 +17,7 @@ workflows:
   coana:
     triggers:
       - schedule:
-          cron: '25 * * * *'
+          cron: '0 12 * * *'
           filters:
             branches:
               only:
