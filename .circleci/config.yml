@@ -1,38 +1,28 @@
 version: 2.1
 
 jobs:
-  semgrep:
+  coana:
     docker:
-      - image: returntocorp/semgrep:latest
+      - image: coana/coana:latest
     steps:
       - checkout
       - run:
-          name: Run Semgrep
-          command: semgrep --config p/r2c --baseline-commit HEAD~ --json > findings.json
-      - run:
-          name: Set up Python environment
+          name: Run Coana
           command: |
-            python3 -m venv venv
-            . venv/bin/activate
-      - run:
-          name: Install dependencies
-          command: |
-            pip install requests slack-sdk
-      - run:
-          name: Post comments for each finding
-          command: |
-            python semgrep_scripts/post_comments.py
-    environment:
-      GITHUB_TOKEN: << parameters.github_token >>
-      LATEST_COMMIT: << parameters.latest_commit >>
-      SLACK_WEBHOOK_URL: << parameters.slack_webhook_url >>
-
+            coana run . \
+            --api-key $COANA_API_KEY \
+            --repo-url https://github.com/ironclad/ironclad \
+            --memory-limit 8192
 workflows:
-  version: 2
-  pull_request:
+  coana:
+    triggers:
+      - schedule:
+          cron: '0 18 * * *'
+          filters:
+            branches:
+              only:
+                - develop
     jobs:
-      - semgrep:
-          parameters:
-            github_token: ${{ secrets.GITHUB_TOKEN }}
-            latest_commit: ${{ github.event.pull_request.head.sha }}
-            slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+      - coana:
+          context:
+            - coana
