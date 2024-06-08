@@ -1,5 +1,11 @@
 version: 2.1
 
+
+parameters:
+  do_coana_scan:
+    default: false
+    type: boolean
+
 jobs:
   coana:
     docker:
@@ -15,14 +21,12 @@ jobs:
             --memory-limit 8192
 workflows:
   coana:
-    triggers:
-      - schedule:
-          cron: '0 12 * * *'
-          filters:
-            branches:
-              only:
-                - master
+    when: << pipeline.parameters.do_coana_scan >>
     jobs:
       - coana:
           context:
             - coana
+          filters:
+            branches:
+              only:
+                - master
